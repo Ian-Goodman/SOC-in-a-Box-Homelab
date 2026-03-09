@@ -1,127 +1,225 @@
-# SOC-in-a-Box Homelab
+# SOC-in-the-Box Homelab
 
-## Description
+## Overview
 
-The **SOC-in-a-Box Homelab** is a segmented, multi-system cybersecurity environment designed to simulate real-world **Security Operations Center (SOC)** workflows with an emphasis on **network security, traffic visibility, and centralized monitoring**.
+**SOC-in-the-Box** is a segmented cybersecurity homelab designed to simulate real-world **Security Operations Center (SOC)** infrastructure and workflows.
 
-This project focuses on building a realistic **Blue Team defensive lab** from the ground up, emphasizing proper **network architecture, firewall placement, VLAN segmentation, and log visibility** before moving into detection engineering and incident response.
+The project focuses on building a realistic **Blue Team defensive environment** that emphasizes:
 
-The lab is intentionally built in phases, with each stage documenting both successful configurations and real-world troubleshooting scenarios encountered during deployment.
+- proper **network architecture**
+- **firewall placement and segmentation**
+- **traffic visibility**
+- **centralized logging and monitoring**
+- **security telemetry generation**
 
-The environment is distributed across two physical systems:
+Rather than deploying tools immediately, the lab is intentionally built **from the network layer upward**, documenting the infrastructure, troubleshooting, and architectural decisions required to create a stable SOC environment.
 
-- **Proxmox Server** – Hosts core SOC infrastructure services (SIEM and security tooling) on isolated networks.
-- **Main Homelab Workstation** – Runs the operational environment (attack and target VMs) and the perimeter firewall VM to simplify connectivity while maintaining segmentation.
-
----
-
-## Architecture Overview
-
-- **Firewall / Router:** OPNsense (virtualized on the Main Homelab Workstation in VirtualBox)
-- **SIEM:** Wazuh (planned on Proxmox: manager, indexer, and dashboard)
-- **Endpoints & Attack VMs:** Kali Linux, vulnerable Linux targets (additional endpoints added in later phases)
-- **Windows Environment:** Windows systems planned for later phases (AD + clients)
-- **Network Visibility & Analysis:** Firewall logs, host telemetry, packet analysis
+Each phase of the project reflects a real step in building a security monitoring environment used in enterprise networks.
 
 ---
 
-## Project Objectives
+# Project Goals
 
-- Design and implement proper VLAN segmentation for a SOC lab
-- Deploy OPNsense as a virtualized perimeter firewall
-- Establish correct WAN/LAN separation and routing
-- Route lab traffic through the firewall for inspection and logging
-- Prepare the environment for centralized SIEM ingestion
-- Document real-world troubleshooting across networking, virtualization, and OS layers
+The primary goals of this homelab are to:
 
----
-
-## Environment Summary
-
-### System 1 — Proxmox Host (SOC Services)
-- **Wazuh SIEM** *(Planned for Part 3)*  
-  Manager, Indexer, and Dashboard hosted on Proxmox to centralize visibility across the lab.
-- **SOC Services Expansion** *(Planned)*  
-  Additional security tooling and dashboards as the lab grows.
-
-### System 2 — Main Homelab Workstation (Operational + Perimeter)
-- **OPNsense Firewall** *(Active / In Use)*  
-  Virtualized in VirtualBox with dual interfaces:
-  - WAN bridged into the Lab ingress VLAN
-  - LAN isolated as an internal network for lab routing and segmentation
-- **Kali Linux**  
-  Attack simulation and traffic generation.
-- **Vulnerable Linux Targets**  
-  Exploitation testing, log and alert generation.
-- **Additional Windows & Linux Endpoints** *(Planned)*  
-  Windows Server + Windows clients added in later phases.
-
+- Design and implement **enterprise-style network segmentation**
+- Deploy a **virtualized firewall architecture**
+- Route all lab traffic through a monitored security boundary
+- Generate realistic **security telemetry**
+- Deploy a **centralized SIEM platform**
+- Simulate attacker activity and detection workflows
+- Document troubleshooting and engineering decisions throughout the build
 
 ---
 
-## Technologies Used
+# Lab Architecture
 
-- **Virtualization:** VirtualBox, Proxmox VE
-- **Firewall & Routing:** OPNsense
-- **Networking:** VLANs, managed switch configuration
-- **SIEM:** Wazuh (Manager, Indexer, Dashboard)
-- **Analysis Tools:** Packet capture, firewall logging
-- **Operating Systems:** OPNsense, Kali Linux, Linux targets, Windows
+The SOC-in-the-Box environment is distributed across **two physical systems**.
+
+## System 1 — Proxmox Server (SOC Infrastructure)
+
+Hosts centralized security tooling and monitoring services.
+
+Planned services include:
+
+- **Wazuh SIEM**
+  - Manager
+  - Indexer
+  - Dashboard
+- Additional SOC tools as the environment expands
+
+This system acts as the **central visibility and monitoring layer** of the lab.
 
 ---
 
-## Project Breakdown
+## System 2 — Main Homelab Workstation (Operational Environment)
 
-1. **[Part 1 – Infrastructure Setup](part-1_infrastructure-setup/)**
-   - VLAN design and segmentation (foundation)
-   - Managed switch configuration (trunk vs access)
-   - OPNsense VirtualBox deployment (WAN/LAN separation)
-   - Hypervisor troubleshooting and persistence fixes
+Runs the firewall and the operational lab environment.
 
-2. **[Part 2 – Network Segmentation & Firewall Policy](part-2_network-segmentation/)**
-   - Build out segmentation strategy across internal lab VLANs
-   - Configure OPNsense firewall rules (inter-VLAN access control)
-   - Connect VirtualBox VMs to the correct VLANs/networks
-   - Validate routing, DNS, and controlled reachability per segment
+Components include:
 
-3. **Part 3 – Wazuh Deployment & Log Ingestion** *(Planned)*
-   - Deploy Wazuh on Proxmox (manager, indexer, dashboard)
-   - Ingest firewall logs and endpoint telemetry
-   - Validate log pipelines and baseline dashboards
+- **OPNsense Firewall**
+  - Virtualized in VirtualBox
+  - Enforces segmentation and firewall policies
 
-4. **Part 4 – Endpoint & Domain Configuration** *(Planned)*
-   - Build Windows AD environment
-   - Domain-join clients and enable endpoint logging (Sysmon, auditing)
-   - Expand telemetry sources
+- **Kali Linux**
+  - Attack simulation / operator system
 
-5. **Part 5 – Attack Simulation, Detection & Reporting** *(Planned)*
-   - Simulate adversarial activity
-   - Monitor alerts, tune detections, and map to MITRE ATT&CK
-   - Document SOC triage workflows, dashboards, and reporting
-  
+- **Vulnerable Linux Targets**
+  - Exploitation practice and telemetry generation
+
+- **Windows Environment (Planned)**
+  - Active Directory
+  - Windows endpoints
+
+This system generates the **network traffic and events monitored by the SOC infrastructure**.
+
 ---
 
-## Future Enhancements
+# Network Architecture
+
+The lab uses a **zone-based firewall model**.
+
+Each network segment is routed through **OPNsense**, which enforces policy and generates logs.
+
+| Zone | Purpose |
+|-----|--------|
+| WAN | Upstream network |
+| LAN | Attacker / operator systems |
+| CYBER_RANGE | Vulnerable target systems |
+| AD_LAB | Windows domain environment |
+| SOC_SERVICES | Security monitoring infrastructure |
+
+This design mirrors enterprise security architecture where **all traffic between zones passes through a firewall**.
+
+---
+
+# Technologies Used
+
+| Category | Technology |
+|--------|-------------|
+| Virtualization | VirtualBox, Proxmox VE |
+| Firewall | OPNsense |
+| Networking | VLAN segmentation, managed switching |
+| SIEM | Wazuh |
+| Attack Platform | Kali Linux |
+| Vulnerable Targets | Chronos, Metasploitable |
+| Monitoring | Firewall logs, endpoint telemetry |
+
+---
+
+# Project Roadmap
+
+The lab is built in documented phases.
+
+Each phase expands the infrastructure and security visibility.
+
+---
+
+## Part 1 — Infrastructure Setup
+
+📁 [Part 1 Documentation](part-1_infrastructure-setup/)
+
+Focus:
+
+- VLAN architecture design
+- Managed switch configuration
+- OPNsense deployment in VirtualBox
+- WAN / LAN separation
+- Firewall installation stability and persistence
+
+Outcome:
+
+A stable firewall architecture with correct network segmentation and deterministic routing.
+
+---
+
+## Part 2 — Network Segmentation & Firewall Policy
+
+📁 [Part 2 Documentation](part-2_network-segmentation/)
+
+Focus:
+
+- Implementing **zone-based firewall segmentation**
+- Assigning interfaces for each security zone
+- Configuring DHCP per network segment
+- Enforcing firewall policies between zones
+- Implementing controlled outbound filtering
+- Generating deny logs for telemetry
+
+Outcome:
+
+The lab transitions from a flat network into a **true segmented security environment**.
+
+---
+
+## Part 3 — SIEM Deployment & Telemetry Collection *(In Progress)*
+
+Focus:
+
+- Deploy Wazuh on the Proxmox server
+- Forward firewall logs to SIEM
+- Deploy endpoint telemetry agents
+- Validate log ingestion pipelines
+- Build baseline dashboards
+
+Outcome:
+
+Centralized **security monitoring and log visibility** across the lab.
+
+---
+
+## Part 4 — Windows Environment & Endpoint Telemetry *(Planned)*
+
+Focus:
+
+- Deploy Windows Active Directory
+- Domain-join client systems
+- Configure endpoint telemetry
+- Expand detection surface
+
+---
+
+## Part 5 — Attack Simulation & Detection Engineering *(Planned)*
+
+Focus:
+
+- Simulate attacker activity
+- Monitor alerts and detection rules
+- Map detections to **MITRE ATT&CK**
+- Document SOC triage workflows
+
+---
+
+# Future Enhancements
+
+Planned improvements include:
 
 - Full Wazuh SIEM deployment
 - Windows Active Directory lab
-- Additional segmented VLANs (Red / Blue separation)
-- Detection mapping to MITRE ATT&CK
-- Ticketing and incident tracking integration
-- Automation for log ingestion and enrichment
+- Additional segmented networks
+- Detection engineering exercises
+- MITRE ATT&CK detection mapping
+- Incident response workflow simulation
+- Ticketing and alert triage integration
 
 ---
 
-## Learning Outcomes
+# Skills Demonstrated
 
-- Design and troubleshoot VLAN-based network segmentation
-- Deploy and manage a virtualized firewall in a SOC context
-- Understand real-world WAN/LAN routing behavior
-- Diagnose hypervisor and storage-layer issues affecting security infrastructure
-- Build a foundation for SIEM-based detection and monitoring
+This project demonstrates practical experience in:
+
+- Network segmentation architecture
+- Firewall deployment and policy design
+- Virtualized network infrastructure
+- Security telemetry generation
+- Infrastructure troubleshooting
+- Security monitoring architecture
+- SOC engineering fundamentals
 
 ---
 
-## Connect
+# Connect
 
-🔗 [LinkedIn](https://www.linkedin.com/in/iangoodman13/)
+🔗 LinkedIn  
+https://www.linkedin.com/in/iangoodman13/
