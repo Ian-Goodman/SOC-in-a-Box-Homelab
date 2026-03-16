@@ -257,7 +257,7 @@ Credentials used for initial login:
 
 | Username | Password |
 |---------|----------|
-| admin | W4zO0foo13eva |
+| admin | --- |
 
 The dashboard provides:
 
