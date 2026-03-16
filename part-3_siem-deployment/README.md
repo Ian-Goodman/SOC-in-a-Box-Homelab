@@ -1,4 +1,4 @@
-# Part 3: SOC Telemetry & SIEM Deployment
+# Part 3: SIEM Deployment & SOC Telemetry
 
 ## Overview
 
