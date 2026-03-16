@@ -153,7 +153,9 @@ The lab transitions from a flat network into a **true segmented security environ
 
 ---
 
-## Part 3 — SIEM Deployment & Telemetry Collection *(In Progress)*
+## Part 3 — SIEM Deployment & Telemetry Collection
+
+📁 [Part 3 Documentation](part-3_siem-deployment/)
 
 Focus:
 
