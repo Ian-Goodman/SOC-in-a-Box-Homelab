@@ -1,30 +1,92 @@
-# Part 3 – SIEM Deployment (Wazuh)
-
----
+# Part 3: SOC Telemetry & SIEM Deployment
 
 ## Overview
 
-In this phase of the **SOC-in-a-Box Homelab**, a Security Information and Event Management (SIEM) platform was deployed to provide centralized log collection, monitoring, and security analysis.
+Part 3 focuses on deploying centralized security monitoring infrastructure within the SOC-in-a-Box Homelab.
 
-For this implementation, **Wazuh** was installed on a dedicated Ubuntu virtual machine hosted on **Proxmox**. The SIEM server was placed in its own network segment (**VLAN 50 – Lab_Security**) to simulate how security monitoring infrastructure is typically deployed in enterprise environments.
+This phase introduces a **Security Information and Event Management (SIEM)** platform using **Wazuh**, deployed on a dedicated Ubuntu virtual machine hosted on **Proxmox**. The SIEM server resides inside a dedicated security monitoring segment (**VLAN 50 – Lab_Security**) to simulate enterprise environments where monitoring systems operate within protected security infrastructure networks.
 
-This SIEM layer allows the lab to:
+This monitoring layer allows the lab to:
 
 - Centralize logs from cyber range systems
 - Detect suspicious activity using security rules
 - Monitor authentication events and system behavior
-- Visualize security data through dashboards
+- Visualize security telemetry through dashboards
 - Simulate real SOC monitoring workflows
 
-This step transforms the homelab into a **functional Security Operations Center simulation environment**.
+This phase transitions the homelab from infrastructure architecture into a **functional SOC monitoring environment**.
 
 ---
 
-## Architecture Purpose
+## Objective
 
-In production environments, security monitoring infrastructure is often isolated in a **dedicated security network segment**. This ensures detection systems remain protected while still receiving telemetry from across the network.
+The objective of this phase is to deploy enterprise-style SOC monitoring infrastructure capable of receiving telemetry from across the lab environment.
 
-To replicate this architecture, a new VLAN was created specifically for security infrastructure.
+This includes:
+
+- Deploying a SIEM platform using Wazuh
+- Creating a dedicated security monitoring network segment
+- Hosting the SIEM inside Proxmox infrastructure
+- Configuring static addressing for the SIEM server
+- Verifying Wazuh services and listening ports
+- Enabling log ingestion capabilities
+- Validating connectivity between monitored systems and the SIEM
+- Establishing snapshot recovery points for SOC infrastructure
+
+---
+
+## Environment / Scope
+
+The SOC monitoring architecture deployed in this phase includes the following components.
+
+**SIEM Platform**
+
+- Wazuh Manager
+- Wazuh Indexer (OpenSearch)
+- Wazuh Dashboard
+
+**Virtualization Platform**
+
+- Proxmox used to host the SIEM virtual machine
+
+**Operating System**
+
+- Ubuntu Server deployed as the SIEM host
+
+**Security Monitoring Network**
+
+- VLAN 50 (Lab_Security) dedicated to SOC infrastructure
+
+**Firewall / Network Control**
+
+- OPNsense routing traffic between lab segments and security infrastructure
+
+---
+
+## Tools Used
+
+The following tools were used during this phase:
+
+- **Wazuh** – Security Information and Event Management platform
+- **Ubuntu Server** – SIEM host operating system
+- **Proxmox** – virtualization platform hosting SOC infrastructure
+- **OPNsense** – firewall and routing between segmented networks
+- **Linux networking utilities** – service and port verification
+- **Netplan** – Linux network configuration management
+- **Wazuh Dashboard** – visualization and monitoring interface
+
+---
+
+## Architecture / Design Notes
+
+Enterprise SOC architectures commonly isolate monitoring infrastructure inside a **dedicated security network segment**.
+
+This design ensures:
+
+- Monitoring systems remain protected from compromise
+- Detection infrastructure remains stable during attacks
+- Telemetry can be centrally aggregated
+- Security analysts can investigate events without interfering with production infrastructure
 
 ### Security Monitoring Network
 
@@ -32,34 +94,42 @@ To replicate this architecture, a new VLAN was created specifically for security
 |-----|------|------|
 | 50 | Lab_Security | Security monitoring infrastructure |
 
-The Wazuh SIEM resides inside this VLAN and receives logs from systems across the cyber range.
+### SIEM Host
+
+| Host | Role | IP Address |
+|-----|------|-----------|
+| Wazuh Server | SIEM Manager / Indexer / Dashboard | 192.168.50.169 |
 
 ---
 
-# Network Architecture
+<details>
+<summary><strong>Implementation Steps</strong></summary>
+
+### 1. Create Security Monitoring VLAN
+
+A dedicated network segment was created to host SOC monitoring infrastructure.
+
+| VLAN | Name | Purpose |
+|-----|------|------|
+| 50 | Lab_Security | Security monitoring systems |
+
+This VLAN isolates monitoring infrastructure while still allowing telemetry ingestion.
+
+---
+
+### 2. Deploy Ubuntu SIEM Host
+
+An Ubuntu Server virtual machine was created inside Proxmox to host the Wazuh stack.
+
+The VM was connected to **VLAN 50** and configured with the following static address:
 
 ```
-        Cyber Range
-     (Attack Targets)
-            │
-            │
-            ▼
-        OPNsense
-    (Firewall / Router)
-            │
-            │
-            ▼
-    Lab_Security VLAN 50
-            │
-            │
-            ▼
-        Wazuh SIEM
-      192.168.50.169
+192.168.50.169
 ```
 
 ---
 
-# Step 5 – Install Wazuh SIEM
+### 3. Install Wazuh SIEM
 
 Wazuh was installed using the **Wazuh Installation Assistant**, which automatically deploys:
 
@@ -67,50 +137,24 @@ Wazuh was installed using the **Wazuh Installation Assistant**, which automatica
 - Wazuh Indexer (OpenSearch)  
 - Wazuh Dashboard  
 
-### Installation
+Installation command:
 
 ```bash
 curl -sO https://packages.wazuh.com/4.7/wazuh-install.sh
 sudo bash wazuh-install.sh -a
 ```
 
-The installation script configures the entire SIEM stack required for log ingestion and monitoring.
-
 ---
 
-# Step 6 – Access the Wazuh Dashboard
+### 4. Verify Wazuh Services
 
-Once installation completed, the Wazuh dashboard became accessible through a web browser.
-
-```
-https://192.168.50.169
-```
-
-### Login Credentials
-
-| Username | Password |
-|---------|----------|
-| admin | W4zO0foo13eva |
-
-The dashboard provides:
-
-- Security alerts
-- Host monitoring
-- Event search
-- Compliance monitoring
-- Security dashboards
-
----
-
-# Step 7 – Verify Wazuh Services
-
-After installation, the listening services were verified to confirm the SIEM stack was functioning.
+After installation, listening services were verified.
 
 ```bash
 sudo ss -tulnp | grep -E "1514|1515|55000|443"
 ```
 
-### Important Ports
+Expected services:
 
 | Port | Service |
 |-----|------|
@@ -119,28 +163,16 @@ sudo ss -tulnp | grep -E "1514|1515|55000|443"
 | 55000 | Wazuh API |
 | 443 | Wazuh dashboard |
 
-This ensures the Wazuh manager, API, and dashboard are running.
-
 ---
 
-# Step 8 – Verify OpenSearch Heap Allocation
+### 5. Configure Static IP Address
 
-To confirm the Wazuh indexer had sufficient memory allocation, the heap settings were inspected.
+The SIEM server was configured with a static IP to ensure consistent connectivity.
 
-```bash
-sudo cat /etc/wazuh-indexer/jvm.options | grep -E "Xms|Xmx"
+Configuration file:
+
 ```
-
-The heap size was increased to **3GB** to support log indexing performance in the SIEM environment.
-
----
-
-# Step 9 – Configure Static IP Address
-
-A static IP address was configured so the SIEM server remains consistently reachable from other lab systems.
-
-```bash
-sudo nano /etc/netplan/01-network-manager-all.yaml
+/etc/netplan/01-network-manager-all.yaml
 ```
 
 Example configuration:
@@ -159,7 +191,7 @@ network:
           - 8.8.8.8
 ```
 
-Apply the configuration:
+Apply configuration:
 
 ```bash
 sudo netplan apply
@@ -167,138 +199,260 @@ sudo netplan apply
 
 ---
 
-# Step 10 – Take Proxmox Snapshot
+### 6. Verify Indexer Heap Allocation
 
-After verifying the SIEM installation was successful, a **Proxmox snapshot** was created.
-
-This snapshot provides a recovery point if future configuration changes cause issues.
-
----
-
-# Step 11 – Troubleshoot Network Connectivity
-
-During testing, a connectivity issue appeared:
-
-- OPNsense could ping the Wazuh server
-- Other VMs in the cyber range could not
-
-### Root Cause
-
-Firewall policies were preventing traffic from reaching the SIEM.
-
-### Resolution
-
-Firewall rules were added in **OPNsense** allowing the cyber range VLAN to communicate with the SIEM network.
-
-This restored connectivity between the cyber range and the Wazuh server.
-
----
-
-# Step 12 – Enable Syslog Listener
-
-To allow external systems to send logs to the SIEM, the Wazuh syslog listener was enabled.
+To ensure proper log indexing performance, heap allocation was inspected.
 
 ```bash
-sudo nano /var/ossec/etc/ossec.conf
+sudo cat /etc/wazuh-indexer/jvm.options | grep -E "Xms|Xmx"
 ```
 
-After updating the configuration, the Wazuh manager was restarted.
+Heap allocation was increased to **3GB**.
+
+---
+
+### 7. Enable Syslog Log Ingestion
+
+The Wazuh syslog listener was enabled to allow external systems to send logs to the SIEM.
+
+Configuration file:
+
+```
+/var/ossec/etc/ossec.conf
+```
+
+After editing the configuration, the manager service was restarted.
 
 ```bash
 sudo systemctl restart wazuh-manager
 ```
 
-This allows log ingestion from monitored systems across the lab.
+---
+
+### 8. Create Proxmox Snapshot
+
+Once installation and connectivity were verified, a **Proxmox snapshot** was created to preserve the SIEM baseline configuration.
+
+</details>
 
 ---
 
-# Verification
+## SIEM Deployment (Key Deliverable)
 
-After completing deployment:
+The primary deliverable of Part 3 is the deployment of a centralized SIEM capable of ingesting telemetry across the lab environment.
 
-- The Wazuh dashboard loaded successfully
-- SIEM ports were listening correctly
-- Firewall rules allowed connectivity
-- Logs were successfully ingested into the SIEM
+Core components deployed:
 
-This confirmed the SOC monitoring platform was operational.
+- Wazuh Manager
+- Wazuh Indexer
+- Wazuh Dashboard
+
+Dashboard access:
+
+```
+https://192.168.50.169
+```
+
+Credentials used for initial login:
+
+| Username | Password |
+|---------|----------|
+| admin | W4zO0foo13eva |
+
+The dashboard provides:
+
+- Security alerts
+- Host monitoring
+- Event search
+- Compliance monitoring
+- Security telemetry dashboards
 
 ---
 
-# Lessons Learned
+## Supporting Architecture
 
-This phase introduced key SOC infrastructure concepts:
+```
+Cyber Range Systems
+        │
+        │
+        ▼
+     OPNsense
+ (Firewall / Router)
+        │
+        │
+        ▼
+ Lab_Security VLAN
+        │
+        │
+        ▼
+     Wazuh SIEM
+   192.168.50.169
+```
 
-### Security Network Segmentation
-Security monitoring infrastructure is commonly placed in its own network segment to protect detection systems.
+This architecture mirrors real enterprise SOC monitoring pipelines where telemetry from multiple segments is forwarded to centralized detection infrastructure.
 
-### SIEM Resource Allocation
-Proper memory allocation improves log indexing performance.
+---
 
-### Firewall Rule Design
-Monitoring infrastructure must remain reachable from monitored systems while still being protected.
+<details>
+<summary><strong>Validation / Testing</strong></summary>
+
+The following validation steps confirmed successful SIEM deployment.
+
+### Service Verification
+
+Confirmed listening ports for:
+
+- Wazuh Manager
+- Wazuh API
+- Wazuh Dashboard
+- Agent communication
+
+### Dashboard Access
+
+Verified browser access to:
+
+```
+https://192.168.50.169
+```
+
+### Network Connectivity
+
+Confirmed:
+
+- OPNsense firewall could reach the SIEM host
+- Connectivity from cyber range networks restored after firewall rule updates
+
+### Log Ingestion
+
+Verified logs successfully appearing inside the Wazuh dashboard.
+
+</details>
+
+---
+
+<details>
+<summary><strong>Screenshots / Evidence</strong></summary>
+
+### VLAN 50 Creation
+
+![VLAN 50 Lab Security](assets/vlan50-lab-security.png)
+
+---
+
+### Proxmox Ubuntu VM Creation
+
+![Proxmox Ubuntu VM](assets/proxmox-ubuntu-vm.png)
+
+---
+
+### Wazuh Installation
+
+![Wazuh Installation](assets/wazuh-installation.png)
+
+---
+
+### Wazuh Dashboard Login
+
+![Wazuh Dashboard Login](assets/wazuh-dashboard-login.png)
+
+---
+
+### Wazuh Dashboard Overview
+
+![Wazuh Dashboard](assets/wazuh-dashboard-overview.png)
+
+---
+
+### Port Verification
+
+![Wazuh Port Verification](assets/wazuh-port-verification.png)
+
+---
+
+### Static IP Configuration
+
+![Wazuh Static IP](assets/wazuh-static-ip.png)
+
+---
+
+### SIEM Log Ingestion
+
+![Wazuh Logs](assets/wazuh-archive-logs.png)
+
+</details>
+
+---
+
+<details>
+<summary><strong>Problems Encountered</strong></summary>
+
+### SIEM Network Reachability Issue
+
+Symptoms:
+
+- OPNsense firewall could successfully ping the Wazuh server
+- Cyber range systems were unable to reach the SIEM
+
+Root Cause:
+
+Firewall rules were preventing communication between network segments.
+
+</details>
+
+---
+
+<details>
+<summary><strong>Fixes / Lessons Learned</strong></summary>
+
+### Firewall Policy Adjustment
+
+Connectivity was restored by creating firewall rules allowing cyber range networks to communicate with the SIEM monitoring segment.
+
+---
+
+### SIEM Infrastructure Isolation
+
+Deploying monitoring infrastructure inside a dedicated VLAN improves stability and protects detection systems during security testing.
+
+---
 
 ### Infrastructure Snapshots
-Snapshots provide safe rollback points when experimenting with security tooling.
+
+Creating Proxmox snapshots provides safe rollback points when experimenting with SOC tooling.
+
+</details>
 
 ---
 
-# Screenshots to Capture
+## Skills Demonstrated
 
-### Screenshot: VLAN 50 Creation  
-**Filename:** `vlan50-lab-security.png`  
-**Description:** Creation of VLAN 50 (Lab_Security) on the UCG-Ultra router.
+This phase demonstrates several SOC engineering and security operations skills:
 
----
+- SIEM platform deployment
+- Security monitoring architecture design
+- Enterprise network segmentation for monitoring infrastructure
+- Linux server configuration
+- Security telemetry pipeline creation
+- Firewall troubleshooting and policy design
+- Infrastructure snapshot management
+- Security dashboard monitoring and analysis
 
-### Screenshot: Proxmox Ubuntu VM Creation  
-**Filename:** `proxmox-ubuntu-vm.png`  
-**Description:** Ubuntu virtual machine created in Proxmox to host the Wazuh SIEM.
-
----
-
-### Screenshot: Wazuh Installation Terminal  
-**Filename:** `wazuh-installation.png`  
-**Description:** Terminal showing Wazuh installation assistant running.
+These skills align closely with real **SOC analyst and detection engineering responsibilities**.
 
 ---
 
-### Screenshot: Wazuh Dashboard Login  
-**Filename:** `wazuh-dashboard-login.png`  
-**Description:** Login page for the Wazuh dashboard.
+## Next Phase
 
----
+### Part 4: Threat Simulation & Detection
 
-### Screenshot: Wazuh Dashboard Overview  
-**Filename:** `wazuh-dashboard-overview.png`  
-**Description:** Main Wazuh dashboard displaying monitoring panels.
+The next phase will focus on generating realistic security events within the cyber range.
 
----
+Planned objectives include:
 
-### Screenshot: Port Verification  
-**Filename:** `wazuh-port-verification.png`  
-**Description:** Terminal output showing required Wazuh ports listening.
+- Deploying Wazuh agents on monitored systems
+- Forwarding firewall logs into the SIEM
+- Simulating exploitation from Kali → CYBER_RANGE
+- Generating security alerts
+- Performing investigation workflows inside the Wazuh dashboard
 
----
-
-### Screenshot: Static IP Configuration  
-**Filename:** `wazuh-static-ip.png`  
-**Description:** Netplan configuration file showing static IP settings.
-
----
-
-### Screenshot: Archive Logs in Discover  
-**Filename:** `wazuh-archive-logs.png`  
-**Description:** Wazuh Discover view showing ingested logs from the cyber range.
-
----
-
-# Next Phase
-
-The next phase will expand the SOC-in-a-Box environment by integrating:
-
-- Cyber range systems
-- Attack simulation tools
-- Log ingestion pipelines
-
-This enables **realistic security monitoring and threat detection exercises** within the lab.
+This phase will transition the environment from **passive monitoring to active threat detection and incident investigation**.
